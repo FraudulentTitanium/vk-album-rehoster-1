@@ -30,8 +30,26 @@ function upload(imageUrl, fileName, accToken, userId) {
 
                     return;
                 }
-    var albumId = answer.items[0]
+    
+    function show(state){	
+    document.getElementById('window').style.display = state;            
+    document.getElementById('wrap').style.display = state;
+         
+    var x = document.getElementById("select_album");
+            
+    for(var i = 0; i < answer.count; ++i){
+		var option = document.createElement("option");
+		option.text = answer.items[i].title;
+		x.add(option);
+	    }
+	}
+	show('block');
 
+    function getAlbumIdAndStuff(){
+	
+    var x = document.getElementById("select_album");
+	var albumId = answer.items[x.selectedIndex];
+	
     var uploadHttpRequest = new XMLHttpRequest();
 
     uploadHttpRequest.onload = function () {
@@ -107,6 +125,8 @@ function upload(imageUrl, fileName, accToken, userId) {
         albumUploadServer.send();
     };
     };
+    };
+    
 
     uploadHttpRequest.responseType = 'blob';
     uploadHttpRequest.open('GET', imageUrl);
