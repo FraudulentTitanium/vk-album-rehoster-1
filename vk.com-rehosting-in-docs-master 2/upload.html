@@ -2,7 +2,8 @@
 <html>
 	<head>
 		<title>vk.com DocUploader extension</title>
-		<style media="screen">
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<style media="screen" type="text/css">
     		.centered 
     		{
         		position: absolute;
@@ -10,12 +11,142 @@
         		left: 50%;
         		margin: -20px 0 0 -84px;
     		}
+    		
+				#wrap{
+		    display: none;
+		    opacity: 0.5;
+		    position: fixed;
+		    left: 0;
+		    right: 0;
+		    top: 0;
+		    bottom: 0;
+		    padding: 16px;
+		    background-color: rgba(1, 1, 1, 0.725);
+		    z-index: 100;
+		    overflow: auto;
+		}
+		
+		#window{
+		    width: 300px;
+		    height: 160px;
+		    margin: 50px auto;
+		    display: none;
+		    background: #F7F7F7;
+		    z-index: 200;
+		    position: fixed;
+		    left: 0;
+		    right: 0;
+		    top: 25%;
+		    bottom: 0;
+		    padding: 16px;
+		}
+		
+		.close{
+		    margin-left: 364px;
+		    margin-top: 4px;
+		    cursor: pointer;
+		}
+		
+		.button{
+		float:right;
+		padding: 6px 16px 7px;
+		margin: 0px;
+		font-size: 11px;
+		display: inline-block;
+		cursor: pointer;
+		white-space: nowrap;
+		outline: medium none;
+		font-family: tahoma,arial,verdana,sans-serif,Lucida Sans;
+		vertical-align: top;
+		overflow: visible;
+		line-height: 13px;
+		text-decoration: none;
+		background: none repeat scroll 0% 0% #6383A8;
+		color: #FFF;
+		border: 0px none;
+		border-radius: 2px;
+		transition: background-color 100ms ease-in-out 0s;
+	}
+
+		label {position:relative; width: 180px;}
+		label:after {
+			content:'>';
+			font:11px "Consolas", monospace;
+			color:#aaa;
+			-webkit-transform:rotate(90deg);
+			-moz-transform:rotate(90deg);
+			-ms-transform:rotate(90deg);
+			transform:rotate(90deg);
+			right:8px; top:2px;
+			padding:0 0 2px;
+			border-bottom:1px solid #ddd;
+			position:absolute;
+			pointer-events:none;
+		}
+		<!--
+		label:before {
+			content:'';
+			right:6px; top:0px;
+			width:40px; height:20px;
+			background:#f8f8f8;
+			position:absolute;
+			pointer-events:none;
+			display:block;
+		}
+		-->
+		select {
+			width: auto;
+			padding:3px;
+			margin: 0;
+			-webkit-border-radius:4px;
+			-moz-border-radius:4px;
+			border-radius:4px;
+			-webkit-box-shadow: 0 3px 0 #ccc, 0 -1px #fff inset;
+			-moz-box-shadow: 0 3px 0 #ccc, 0 -1px #fff inset;
+			box-shadow: 0 3px 0 #ccc, 0 -1px #fff inset;
+			background: #f8f8f8;
+			color:#888;
+			border:none;
+			outline:none;
+			display: inline-block;
+			-webkit-appearance:none;
+			-moz-appearance:none;
+			appearance:none;
+			cursor:pointer;
+		}
+		select, option { 
+			width: 120px;
+		}
+		textarea{
+		resize:none;
+		}
 	    </style>
-		<script type="text/javascript" src="upload.js"></script>
-	</head>
+</head>
 <body>
 	<div id="wrap" style="height: 100%;"> 
 		<img class="centered" src="wait.gif" width="168" height="40"/>
 	</div>
+	
+	 <!-- Задний прозрачный фон-->
+        <div onclick="show('none')" id="wrap"></div>
+
+            <!-- Само окно-->
+            <div id="window">
+                 
+                <p>
+                <label>
+                <select id="select_album"> </select>
+  				</label>
+  				</p>
+  
+                <p> 
+                <textarea  cols="35" rows="3" name="description" placeholder="description motherfucker" > </textarea>
+                </p>
+                   
+                <p><input id="btnSend" type="submit" value="Отправить" class="button"></p>  
+            </div>
+
+		<script type="text/javascript" src="upload.js"></script>
+
 </body>
 </html>
