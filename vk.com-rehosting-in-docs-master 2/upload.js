@@ -1,11 +1,18 @@
 /*global chrome, alert, XMLHttpRequest, FormData, document, window, setTimeout */
 
+
 function thereIsAnError(textToShow, errorToShow, imageUrl) {
     "use strict";
 
     document.getElementById('wrap').innerHTML = '<p></p><br/><br/><center><h1>Wow! Some error arrived!</h1></center><br/><br/><p>' + textToShow + '</p><br/><br/><p>' + errorToShow + '</p><p>' + imageUrl + '</p>';
 }
 
+/*make window visible or hide*/
+function show(state){	
+		document.getElementById('window').style.display = state;            
+		document.getElementById('wrap').style.display = state;
+}
+    
 /**
  * Main function to upload an image
  *
@@ -14,113 +21,125 @@ function thereIsAnError(textToShow, errorToShow, imageUrl) {
  * @param  {string} accToken Access token with vk authentication permissions
  */
 function upload(imageUrl, fileName, accToken, userId) {
-    alert('user id' + userId);
+	    
     var uploadHttpRequest = new XMLHttpRequest();
 
     uploadHttpRequest.onload = function () {
-
+	    
     var getAlbumsRequest = new XMLHttpRequest();
-    getAlbumsRequest.open('GET', 'https://api.vk.com/method/photos.getAlbums?owner_id=184411517');
-
+    getAlbumsRequest.open('GET', 'https://api.vk.com/method/photos.getAlbums?owner_id=' + userId);
+	
     getAlbumsRequest.onload = function () {
+	
+        var answer = JSON.parse(getAlbumsRequest.response);
 
-    var answer = JSON.parse(getAlbumsRequest.response);
-    if (answer.error !== undefined) {
-                    chrome.storage.local.remove('vkaccess_token');
+    	if (answer.error !== undefined) {
+             chrome.storage.local.remove('vkaccess_token');
+            document.getElementById('wrap').innerHTML = '<p></p><br/><br/><center><h1>Ops. Something went wrong. Please try again.</h1></center><br/>';
+            setTimeout(function () { window.close(); }, 3000);
+            return;
+    	}
+	
+		function addElemsToSelectBox(){
+			var x = document.getElementById("select_album");
 
-                    document.getElementById('wrap').innerHTML = '<p></p><br/><br/><center><h1>Ops. Something went wrong. Please try again.</h1></center><br/>';
-                    setTimeout(function () { window.close(); }, 3000);
+			for(var i = 0; i < answer.response.length; ++i){
+			    var option = document.createElement("option");
+				    
+				option.text = answer.response[i].title;
+				x.add(option);
+		}
+	}
+		
+		    
+	addElemsToSelectBox();
+	show('block');
+	document.getElementById("btnSend").addEventListener("click", 
+	
+	function(){
+		function getAlbumIdAndStuff(){
+			var x = document.getElementById("select_album");
+			 
+			var albumId = answer.response[x.selectedIndex].aid;
+  
+			show('none');
 
-                    return;
-                }
+		    var albumUploadServer = new XMLHttpRequest(),
+		        requestFormData,
+		        albumUploadRequest;
 
-    var albumId = answer.response[0].aid;
-    alert('albumId ' + albumId);
+		    albumUploadServer.open('GET', 'https://api.vk.com/method/photos.getUploadServer?access_token=' + accToken +'&album_id=' + albumId);
 
-        var albumUploadServer = new XMLHttpRequest(),
-            requestFormData,
-            albumUploadRequest;
+		    albumUploadServer.onload = function () {
+				    
+		        var answer = JSON.parse(albumUploadServer.response);
+ 
+		        if (answer.error !== undefined) {
+		            chrome.storage.local.remove('vkaccess_token');
+		            document.getElementById('wrap').innerHTML = '<p></p><br/><br/><center><h1>Ops. Something went wrong. Please try again.</h1></center><br/>';
+		            setTimeout(function () { window.close(); }, 3000);
+		            return;
+		        }
 
-        albumUploadServer.open('GET', 'https://api.vk.com/method/photos.getUploadServer?access_token=' + accToken +'&album_id=' + albumId);
+		        if (answer.response.upload_url === undefined) {
+		            thereIsAnError('albumUploadServer response problem', answer, imageUrl);
+		            return;
+		        }
 
-        albumUploadServer.onload = function () {
+		        requestFormData = new FormData();
+		        albumUploadRequest = new XMLHttpRequest();
 
-            var answer = JSON.parse(albumUploadServer.response);
+		        requestFormData.append("file", uploadHttpRequest.response, fileName);
 
-            alert('albumUploadServer ' + answer.response.upload_url);
-            if (answer.error !== undefined) {
-                chrome.storage.local.remove('vkaccess_token');
+		        albumUploadRequest.open('POST', answer.response.upload_url, true);
 
-                document.getElementById('wrap').innerHTML = '<p></p><br/><br/><center><h1>Ops. Something went wrong. Please try again.</h1></center><br/>';
-                setTimeout(function () { window.close(); }, 3000);
+		        albumUploadRequest.onload = function () {
+		            var answer = JSON.parse(albumUploadRequest.response),
+		                albumSaveRequest;
+		                
+		            if (answer.photos_list === undefined) {
+		                thereIsAnError('Upload blob problem response problem', answer.toString, imageUrl);
+		                return;
+		            }
 
-                return;
-            }
+		            albumSaveRequest = new XMLHttpRequest();
 
-            if (answer.response.upload_url === undefined) {
-                thereIsAnError('albumUploadServer response problem', answer, imageUrl);
+		            albumSaveRequest.open('GET', 'https://api.vk.com/method/photos.save?access_token=' + accToken +'&server=' + answer.server +
+		            '&photos_list=' + answer.photos_list + "&hash=" + answer.hash + "&album_id=" + albumId);
 
-                return;
-            }
+		            albumSaveRequest.onload = function () {
 
-            requestFormData = new FormData();
-            albumUploadRequest = new XMLHttpRequest();
+		                var answer = JSON.parse(albumSaveRequest.response);
 
-            requestFormData.append("file", uploadHttpRequest.response, fileName);
-
-            alert('response ' + uploadHttpRequest.response);
-            alert('url ' + answer.response.upload_url);
-            albumUploadRequest.open('POST', answer.response.upload_url, true);
-
-            albumUploadRequest.onload = function () {
-
-
-                var answer = JSON.parse(albumUploadRequest.response),
-                    albumSaveRequest;
-
-                alert('albumUploadRequest ' + albumUploadRequest.photos_list);
-                if (answer.photos_list === undefined) {
-                    thereIsAnError('Upload blob problem response problem', answer.toString, imageUrl);
-
-                    return;
-                }
-
-                albumSaveRequest = new XMLHttpRequest();
-
-                albumSaveRequest.open('GET', 'https://api.vk.com/method/photos.save?access_token=' + accToken +'&server=' + answer.server +
-                '&photos_list=' + answer.photos_list + "&hash=" + answer.hash + "&album_id=" + albumId);
-
-                albumSaveRequest.onload = function () {
-
-                    alert('albumSaveRequest ' + albumSaveRequest.response);
-                    var answer = JSON.parse(albumSaveRequest.response);
-
-                    if (answer.response[0].pid === undefined) {
-                        thereIsAnError('albumSaveRequest - no file in response', answer, imageUrl);
-
-                        return;
-                    }
-                    alert('albumSaveRequest ' + answer.response[0].pid);
-                    document.getElementById('wrap').innerHTML = '<p></p><br/><br/><center><h1>Successfully uploaded!</h1></center><br/>';
-                    setTimeout(function () { window.close(); }, 3000);
-                };
-
-                albumSaveRequest.send();
-            };
-
-            albumUploadRequest.send(requestFormData);
-        };
-
-        albumUploadServer.send();
-    };
-            getAlbumsRequest.send();
-};
-    uploadHttpRequest.responseType = 'blob';
-            uploadHttpRequest.open('GET', imageUrl);
-            uploadHttpRequest.send();
+		                if (answer.response[0].pid === undefined) {
+		                    thereIsAnError('albumSaveRequest - no file in response', answer, imageUrl);
+		                    return;
+		                }
+		                    
+		                document.getElementById('wrap').innerHTML = '<p></p><br/><br/><center><h1>Successfully uploaded!</h1></center><br/>';
+		                setTimeout(function () { window.close(); }, 3000);
+		            };
+		            albumSaveRequest.send();
+		        };
+		        albumUploadRequest.send(requestFormData);
+		    };
+		    albumUploadServer.send();
     }
+    getAlbumIdAndStuff();
+    });
+    };
+    
+    getAlbumsRequest.send();
+};
 
 
+uploadHttpRequest.responseType = 'blob';
+    uploadHttpRequest.open('GET', imageUrl);
+    uploadHttpRequest.send();
+}
+
+
+		
 /**
  * Add a listener for DOMContentLoaded event
  *
@@ -134,10 +153,7 @@ document.addEventListener("DOMContentLoaded", function () {
         imageUrl = null,
         filename,
         imageName;
-     alert('url check ' + params);
-     alert('param 2 ' + params[1]);
-     alert('param 3 ' + params[2]);
-     alert('params length ' + params.length);
+         
     if (params === undefined || params.length ===  undefined || params.length !== 3) {
         thereIsAnError('Parsing image url', 'params || params.length != 3', imageUrl);
         return;
@@ -165,7 +181,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (imageName.indexOf('&') > -1) {
         imageName = imageName.slice(0, imageName.indexOf('&'));
     }
-    alert('userId' + params[2]);
+        
 
     upload(imageUrl, imageName, params[1], params[2]);
 });
